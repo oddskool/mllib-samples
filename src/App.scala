@@ -22,12 +22,12 @@ object App {
       sc,
       trainingSetPath,
       -1,
-      10)
+      30)
     val testDataRDD = LibSVMRegressionLoader.loadLibSVMRegressionFile(
       sc,
       testingSetPath,
       -1,
-      10)
+      30)
     (trainDataRDD, testDataRDD)
   }
 
@@ -36,17 +36,17 @@ object App {
     println("Mean Error = " + meanError)
     val squareRootedMeanError = valuesAndPreds.map{case(v, p) => Math.sqrt(v - p)}.mean()
     println("Square Root Mean Error = " + squareRootedMeanError)
-    val MSE = valuesAndPreds.map{case(v, p) => math.pow((1e-9 + v - p), 2)}.mean()
+    val MSE = valuesAndPreds.map{case(v, p) => math.pow(v - p, 2)}.mean()
     println("Mean Squared Error = " + MSE)
   }
 
   def initializeLocalSparkContext() = {
     val conf = new SparkConf()
       .setAppName("MLLib POC")
-      .setMaster("local[1]") // set 4 local executors
+      .setMaster("local[4]") // set 4 local executors
       .setSparkHome("/usr/local/Cellar/apache-spark/1.0.0/libexec/")
       .set("spark.executor.memory", "1g")
-      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+//      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     val sc = new SparkContext(conf)
     sc
   }
