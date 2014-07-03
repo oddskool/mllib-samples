@@ -31,7 +31,7 @@ object App {
   }
 
   def evaluate(valuesAndPreds: RDD[Tuple2[Double, Double]]) = {
-    println("XOXOX")
+    println("Sample predictions")
     valuesAndPreds.take(10).map(t => println(t))
     val absoluteErrors = valuesAndPreds.map{case(v, p) => Math.abs(v - p)}.cache()
     val stableAbsoluteErrors = absoluteErrors.filter(e => !e.isNaN)
@@ -48,16 +48,14 @@ object App {
   def initializeLocalSparkContext() = {
     val conf = new SparkConf()
       .setAppName("MLLib POC")
-      .setMaster("local[2]")
+      .setMaster("local[4]")
       .setSparkHome("/usr/local/Cellar/apache-spark/1.0.0/libexec/")
       .set("spark.executor.memory", "1g")
-      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     val sc = new SparkContext(conf)
     sc
   }
 
-//  def predict(testingData: RDD[LabeledPoint], model: DecisionTreeModel): RDD[Tuple2[Double, Double]] = {
-  def predict(testingData: RDD[LabeledPoint], model: RidgeRegressionModel): RDD[Tuple2[Double, Double]] = {
+  def predict(testingData: RDD[LabeledPoint], model: LinearRegressionModel): RDD[Tuple2[Double, Double]] = {
     testingData.map { point: LabeledPoint =>
       val prediction = model.predict(point.features)
       Tuple2[Double, Double](point.label, prediction.asInstanceOf[Double])
@@ -71,13 +69,18 @@ object App {
     val (trainingData, testingData): (RDD[LabeledPoint], RDD[LabeledPoint]) =
       loadLibSVMRegressionDataSets(sc, "YearPredictionMSD", "YearPredictionMSD.t")
 
-//    val model = DecisionTree.train(trainingData, Algo.Regression, Variance, 10)
-    
-    val trainedModel = RidgeRegressionWithSGD.train(trainingData, 1000, 10, 1)
+    var trainedModel = LinearRegressionWithSGD.train(trainingData, 100, 1, 0.5)
 
-    val valuesAndPredictions = predict(testingData, trainedModel)
+    for (i <- 1 to 10) {
 
-    evaluate(valuesAndPredictions)
+      println("Model: " + trainedModel.intercept + " / " + trainedModel.weights)
+
+      val valuesAndPredictions = predict(testingData, trainedModel)
+
+      evaluate(valuesAndPredictions)
+
+      trainedModel =  LinearRegressionWithSGD.train(trainingData, 100, 1, 0.5)
+    }
   }
 
 }

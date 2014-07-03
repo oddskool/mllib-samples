@@ -18,7 +18,7 @@ object LibSVMRegressionLoader {
       .map { line =>
       val items = line.trim.split(' ')
       val label = items.head.toDouble
-      val (indices, values) = items.tail
+      var (indices, values) = items.tail
         .filter(item => !item.isEmpty)
         .map { item =>
           var index = 0
@@ -39,7 +39,11 @@ object LibSVMRegressionLoader {
           (index, value)
         }
         .unzip
-      (label, indices.toArray, values.toArray)
+      indices = indices
+      indices :+= 91
+      values = values
+      values :+= 1.0D
+        (label, indices.toArray, values.toArray)
     }
 
     // Determine number of features.
